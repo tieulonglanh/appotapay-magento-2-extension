@@ -17,17 +17,14 @@
                 <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Title</label>
                 </field>
-                <field id="api_key" translate="label" type="obscure" sortOrder="21" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>API KEY</label>
-                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                <field id="api_key" translate="label" type="text" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Api Key</label>
                 </field>
-                <field id="api_secret" translate="label" type="obscure" sortOrder="22" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="api_secret" translate="label" type="text" sortOrder="22" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>API SECRET</label>
-                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
                 </field>
-                <field id="api_private_key" translate="label" type="obscure" sortOrder="23" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="api_private_key" translate="label" type="text" sortOrder="23" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>API PRIVATE KEY</label>
-                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
                 </field>
                 <field id="allowspecific" translate="label" type="allowspecific" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Payment from Applicable Countries</label>

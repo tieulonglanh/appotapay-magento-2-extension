@@ -29,21 +29,14 @@ Class Receiver extends \Magento\Framework\App\Helper\AbstractHelper {
         $this->orderFactory = $orderFactory;
     }
 
-    public function checkValidRequest($get, $api_secret) {
-
+    public function checkValidRequest($data, $api_secret) {
         if (!$this->hasCurl()) {
             return array(
                 'error_code' => 102,
                 'message' => 'Kiểm tra curl trên server'
             );
         }
-        $signature = $get['signature'];
-        $data['order_id'] = $get['merchant_order_id'];
-        $data['transaction_id'] = $get['transaction_id'];
-        $data['transaction_status'] = $get['transaction_status'];
-        $data['total_amount'] = $get['total_amount'];
-
-        if (!$this->verifySignature($data, $signature, $api_secret)) {
+        if (!$this->verifySignature($data, $api_secret)) {
             return array(
                 'error_code' => 103,
                 'message' => 'Sai signature gửi đến. Không thể thực hiện thanh toán!'
@@ -57,10 +50,10 @@ Class Receiver extends \Magento\Framework\App\Helper\AbstractHelper {
     }
 
 
-    public function checkValidOrder($get) {
-        $order_id = (int) $get['merchant_order_id'];
-        $transaction_status = (int) $get['transaction_status'];
-        $total_amount = floatval($get['total_amount']);
+    public function checkValidOrder($data) {
+        $order_id = (int) $data['order_id'];
+        $transaction_status = (int) $data['status'];
+        $total_amount = $data['amount'];
         
         $confirm = '';
 
@@ -113,11 +106,14 @@ Class Receiver extends \Magento\Framework\App\Helper\AbstractHelper {
         return function_exists('curl_version');
     }
 
-    private function verifySignature($data, $signature, $secret_key) {
-        $str_data = serialize($data) . $secret_key;
-        $compare_signature = hash('sha256', $str_data);
-        return true;
-        if ($compare_signature == $signature) {
+    private function verifySignature($data, $secret_key) {
+        $signature = $data['signature'];
+	unset($data['signature']);
+	ksort($data);
+        $data_str = implode('', $data);
+        $secret = pack('H*', strtoupper(md5($secret_key)));
+        $new_signature = hash_hmac('sha256', $data_str, $secret);
+        if($signature == $new_signature) {
             return true;
         } else {
             return false;

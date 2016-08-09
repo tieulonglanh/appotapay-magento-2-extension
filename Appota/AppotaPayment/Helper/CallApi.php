@@ -38,20 +38,7 @@ class CallApi extends \Magento\Framework\App\Helper\AbstractHelper{
     public function getPaymentUrl($params)
     {
         // build api url
-        $api_url = $this->API_URL.$this->VERSION.'/services/appota_pay?api_key='.$this->API_KEY.'&lang='.$this->LANG;
-        $data = array();
-        $data['data'] = $params;    
-        if($this->SSL_VERIFY) {
-            if(!$this->API_PRIVATE_KEY) {
-                return array(
-                    'error' => 110,
-                    'message' => 'Website chưa nhập api private key. Không thể thực hiện thanh toán!'
-                );
-            }
-            $data['signature'] = $this->createOpenSSLSignature($params, $this->API_PRIVATE_KEY);
-        } else{
-            $data['signature'] = $this->createSignature($params, $this->SECRET_KEY);
-        }
+        $api_url = $this->API_URL.$this->VERSION.'/payment/ecommerce?api_key='.$this->API_KEY.'&lang='.$this->LANG;
         if(!$this->SECRET_KEY) {
             return array(
                 'error' => 111,
@@ -65,11 +52,7 @@ class CallApi extends \Magento\Framework\App\Helper\AbstractHelper{
             );
         }
         // request get payment url
-        $result = $this->makeRequest($api_url, $data, $this->METHOD);
-        //return array(
-        //    'error' => 0,
-        //    'redirect_url' => 'http://appotapay.com'
-        //);
+        $result = $this->makeRequest($api_url, $params, $this->METHOD);
         return json_decode($result, true);
     }
 
@@ -140,10 +123,9 @@ M1lQGWg1Ezua7THoyQIDAQAB
      */
     private function makeRequest($url, $params, $method = 'POST')
     {
-//        var_dump($params); die;
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_POST, TRUE);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);

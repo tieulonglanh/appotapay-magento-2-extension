@@ -79,25 +79,32 @@ class Start extends \Magento\Framework\App\Action\Action {
             $tax_amount = $order->getTaxAmount();
             $shipping_data = $order->getShippingAddress()->getData();
             
-            $order_id_by_time = time() . "-" . $data['entity_id'];
             $params = array();
-            $params['order_id_by_time'] = strval($order_id_by_time);
-            $params['merchant_order_id'] = $data['entity_id'];
+            $params['order_id'] = strval($data['entity_id']);
             $params['total_amount'] = strval($total_amount);
             $params['shipping_fee'] = strval($shipping_amount); 
             $params['tax_fee'] = strval($tax_amount);
             $params['currency_code'] = $data['order_currency_code'];
-            $params['order_description'] = "";
-
             $params['url_success'] = $url_success;
             $params['url_cancel'] = $url_cancel;
-
+            $params['order_description'] = "";
             $params['payer_name'] = $payer_name;
             $params['payer_email'] = $shipping_data['email'];
             $params['payer_phone_no'] = $shipping_data['telephone'];
             $params['payer_address'] = $shipping_data['street'] ." - ". $shipping_data['city'];
+            $params['ip'] = $this->auto_reverse_proxy_pre_comment_user_ip();
+            $params['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
             $noError = 1;
-            
+            $items = $order->getItems();
+            $items_data = array();
+            foreach($items as $item) {
+                $id = $item->getId();
+                $items_data[$id]['id'] = $id;
+                $items_data[$id]['name'] = $item->getName();
+                $items_data[$id]['price'] = $item->getPrice();
+                $items_data[$id]['quantity'] = $item->getQtyOrdered();
+            }
+            $params['product_info'] = json_encode($items_data);
             if(!in_array($data['order_currency_code'], $this->allow_curency)) {
                 $message = "Loại tiền tệ thanh toán không được cổng thanh toán chấp nhận. Chỉ cho phép dùng Việt Nam Đồng. Xin hãy báo người quản lý website!";
                 $noError = 0;
@@ -112,21 +119,19 @@ class Start extends \Magento\Framework\App\Action\Action {
             
             $result = $this->callApiHelper->getPaymentUrl($params);
             
-            
-            
             if(empty($result)) {
                 $message = "Không nhận được thông tin trả về!";
                 $noError = 0;
                 $this->logger->info($message);
                 $this->messageManager->addError($message);
             }
-            if ($result['error'] != 0) {
+            if ($result['error_code'] != 0) {
                 $noError = 0;
                 $this->logger->info($result['message']);
                 $this->messageManager->addError($result['message']);
             }
             if($noError) {
-                $appota_payment_url = $result['redirect_url'];
+                $appota_payment_url = $result['data']['payment_url'];
                 $this->logger->info("Success: Redirect Payment Url -> " . $appota_payment_url);
                 $this->_redirect($appota_payment_url);
             }else{
@@ -161,6 +166,26 @@ class Start extends \Magento\Framework\App\Action\Action {
             $this->quote = $this->getCheckoutSession()->getQuote();
         }
         return $this->quote;
+    }
+    
+    function auto_reverse_proxy_pre_comment_user_ip() {
+        $REMOTE_ADDR = $_SERVER['REMOTE_ADDR'];
+        if (!empty($_SERVER['X_FORWARDED_FOR'])) {
+            $X_FORWARDED_FOR = explode(',', $_SERVER['X_FORWARDED_FOR']);
+            if (!empty($X_FORWARDED_FOR)) {
+                $REMOTE_ADDR = trim($X_FORWARDED_FOR[0]);
+            }
+        }
+        /*
+         * Some php environments will use the $_SERVER['HTTP_X_FORWARDED_FOR'] 
+         * variable to capture visitor address information.
+         */ elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $HTTP_X_FORWARDED_FOR = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+            if (!empty($HTTP_X_FORWARDED_FOR)) {
+                $REMOTE_ADDR = trim($HTTP_X_FORWARDED_FOR[0]);
+            }
+        }
+        return preg_replace('/[^0-9a-f:\., ]/si', '', $REMOTE_ADDR);
     }
 
 }

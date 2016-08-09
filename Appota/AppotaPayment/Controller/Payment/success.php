@@ -58,9 +58,9 @@ class Success extends \Magento\Framework\App\Action\Action {
             if ($check_valid_request['error_code'] == 0) {
                 $check_valid_order = $this->receiver->checkValidOrder($_GET);
                 if ($check_valid_order['error_code'] == 0) {
-                    $order_id = (int) $_GET['merchant_order_id'];
+                    $order_id = (int) $_GET['order_id'];
                     $transaction_id = (int) $_GET['transaction_id'];
-                    $total_amount = floatval($_GET['total_amount']);
+                    $total_amount = (int) $_GET['amount'];
                     $order = $this->orderFactory->create()->load($order_id);
                     $order_status = 'complete';
                     $order->setData('state', "payment_review");
